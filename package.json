@@ -1,0 +1,31 @@
+{
+  "name": "falcor-to-path-values",
+  "version": "1.0.1",
+  "description": "",
+  "main": "dist/toPathValues.dist.js",
+  "scripts": {
+    "test": "mocha --full-trace --require babel-core/register",
+    "build": "babel src/toPathValues.js --out-file dist/toPathValues.dist.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/almasakchabayev/falcor-to-path-values.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/almasakchabayev/falcor-to-path-values/issues"
+  },
+  "homepage": "https://github.com/almasakchabayev/falcor-to-path-values#readme",
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  },
+  "devDependencies": {
+    "babel-core": "^6.3.17",
+    "babel-preset-es2015": "^6.3.13",
+    "chai": "^3.4.1",
+    "mocha": "^2.3.4"
+  }
+}
