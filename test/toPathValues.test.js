@@ -37,7 +37,7 @@ describe('toPathValues', () => {
             title: 'value2'
           },
           '1f6527f3-c99d-4ff0-b31f-09cb793b9sad': {
-            title: 'valu3'
+            title: 'value3'
           },
         },
         commentsById: {
@@ -82,7 +82,96 @@ describe('toPathValues', () => {
       }
     ]
     const result = toPathValues(json)
-    expect(result[0]).to.deep.equal(expected[0])
     expect(result.length).to.equal(expected.length)
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i]).to.deep.equal(expected[i])
+    }
   })
+  it('should work with object that contains circular references', () => {
+    const json = {
+      json: {
+        dealsById: {
+          '\u001ekey': 'dealsById',
+          '\u001eparent': null,
+          '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
+            '\u001ekey': '1f6527f3-c99d-4ff0-b31f-09cb793b966f',
+            '\u001eparent': {
+              '\u001ekey': 'dealsById',
+              '\u001eparent': null,
+              '1f6527f3-c99d-4ff0-b31f-09cb793b966f': ['Circular'],
+              'c3202ba8-2896-4633-838f-aac2d08dbcae': {
+                '\u001ekey': 'c3202ba8-2896-4633-838f-aac2d08dbcae',
+                '\u001eparent': ['Circular'],
+                title: 'third deal today'
+              },
+              'cce23b62-5b13-46ee-9d93-3a0b5df741db': {
+                '\u001ekey': 'cce23b62-5b13-46ee-9d93-3a0b5df741db',
+                '\u001eparent': ['Circular'],
+                title: 'go to awesome stack, kill relay for good'
+              }
+            },
+            title: 'Buy trip to Miami with 20% discount'
+          },
+          'c3202ba8-2896-4633-838f-aac2d08dbcae': {
+            '\u001ekey': 'c3202ba8-2896-4633-838f-aac2d08dbcae',
+            '\u001eparent': {
+              '\u001ekey': 'dealsById',
+              '\u001eparent': null,
+              '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
+                '\u001ekey': '1f6527f3-c99d-4ff0-b31f-09cb793b966f',
+                '\u001eparent': ['Circular'],
+                title: 'Buy trip to Miami with 20% discount'
+              },
+              'c3202ba8-2896-4633-838f-aac2d08dbcae': ['Circular'],
+              'cce23b62-5b13-46ee-9d93-3a0b5df741db': {
+                '\u001ekey': 'cce23b62-5b13-46ee-9d93-3a0b5df741db',
+                '\u001eparent': ['Circular'],
+                title: 'go to awesome stack, kill relay for good'
+              }
+            },
+            title: 'third deal today'
+          },
+          'cce23b62-5b13-46ee-9d93-3a0b5df741db': {
+            '\u001ekey': 'cce23b62-5b13-46ee-9d93-3a0b5df741db',
+            '\u001eparent': {
+              '\u001ekey': 'dealsById',
+              '\u001eparent': null,
+              '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
+                '\u001ekey': '1f6527f3-c99d-4ff0-b31f-09cb793b966f',
+                '\u001eparent': ['Circular'],
+                title: 'Buy trip to Miami with 20% discount'
+              },
+              'c3202ba8-2896-4633-838f-aac2d08dbcae': {
+                '\u001ekey': 'c3202ba8-2896-4633-838f-aac2d08dbcae',
+                '\u001eparent': ['Circular'],
+                title: 'third deal today'
+              },
+              'cce23b62-5b13-46ee-9d93-3a0b5df741db': ['Circular']
+            },
+            title: 'go to awesome stack, kill relay for good'
+          }
+        }
+      }
+    }
+    const expected = [
+      {
+        path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'title'],
+        value: 'Buy trip to Miami with 20% discount'
+      },
+      {
+        path: ['dealsById', 'c3202ba8-2896-4633-838f-aac2d08dbcae', 'title'],
+        value: 'third deal today'
+      },
+      {
+        path: ['dealsById', 'cce23b62-5b13-46ee-9d93-3a0b5df741db', 'title'],
+        value: 'go to awesome stack, kill relay for good'
+      }
+    ]
+    const result = toPathValues(json)
+    expect(result.length).to.equal(expected.length)
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i]).to.deep.equal(expected[i])
+    }
+  })
+  // TODO json should be ignored if tackled
 })
