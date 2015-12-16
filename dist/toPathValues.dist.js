@@ -4,30 +4,52 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _falcorJsonGraph = require('falcor-json-graph');
+
 exports.default = function (json) {
   var pathValues = [];
   var shouldCreateNewPathValue = true;
-  var pushConstant = function pushConstant(value) {
-    return pathValues[pathValues.length - 1].value = value;
+  var currentPath = [];
+  var pushValue = function pushValue(value) {
+    shouldCreateNewPathValue = true;
+    pathValues[pathValues.length - 1].value = value;
+  };
+  var getRefKey = function getRefKey(obj) {
+    var result = false;
+    for (var key in obj) {
+      if (key.includes('path')) {
+        result = key;
+        return result;
+      }
+    }
   };
   var compile = function compile(value) {
     if (value && value.constructor === Object) {
-      for (var key in value) {
-        if (!key.includes('key') && !key.includes('parent')) {
-          if (shouldCreateNewPathValue) {
-            pathValues[pathValues.length] = {
-              path: [],
-              value: null
-            };
+      var refKey = getRefKey(value);
+      if (refKey) {
+        pushValue((0, _falcorJsonGraph.ref)(value[refKey]));
+      } else {
+        for (var key in value) {
+          if (!key.includes('key') && !key.includes('parent')) {
+            currentPath.push(key);
+            if (shouldCreateNewPathValue) {
+              pathValues[pathValues.length] = {
+                path: currentPath.slice(),
+                value: null
+              };
+            } else {
+              pathValues[pathValues.length - 1].path.push(key);
+            }
+            shouldCreateNewPathValue = false;
+            compile(value[key]);
+            currentPath.pop();
           }
-          shouldCreateNewPathValue = false;
-          pathValues[pathValues.length - 1].path.push(key);
-          compile(value[key]);
         }
       }
+    } else if (value && value.constructor === Array) {
+      pushValue((0, _falcorJsonGraph.ref)(value));
     } else {
-      shouldCreateNewPathValue = true;
-      pushConstant(value);
+      pushValue(value);
     }
   };
   compile(json.json);

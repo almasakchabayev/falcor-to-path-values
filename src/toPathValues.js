@@ -1,33 +1,51 @@
+import { ref as $ref } from 'falcor-json-graph';
+
 export default json => {
-  let pathValues = [];
+  const pathValues = [];
   let shouldCreateNewPathValue = true;
-  const currentPath =[]
-  const pushConstant = value =>
-    pathValues[pathValues.length - 1].value = value
+  const currentPath = [];
+  const pushValue = value => {
+    shouldCreateNewPathValue = true;
+    pathValues[pathValues.length - 1].value = value;
+  };
+  const getRefKey = obj => {
+    let result = false;
+    for (const key in obj) {
+      if (key.includes('path')) {
+        result = key;
+        return result;
+      }
+    }
+  };
   const compile = value => {
     if (value && (value.constructor === Object)) {
-      for (let key in value) {
-        if (!key.includes('key') && !key.includes('parent')) {
-          console.log(key);
-          currentPath.push(key)
-          if (shouldCreateNewPathValue) {
-            pathValues[pathValues.length] = {
-              path: currentPath.slice(),
-              value: null,
+      const refKey = getRefKey(value);
+      if (refKey) {
+        pushValue($ref(value[refKey]));
+      } else {
+        for (const key in value) {
+          if (!key.includes('key') && !key.includes('parent')) {
+            currentPath.push(key);
+            if (shouldCreateNewPathValue) {
+              pathValues[pathValues.length] = {
+                path: currentPath.slice(),
+                value: null
+              };
+            } else {
+              pathValues[pathValues.length - 1].path.push(key);
             }
-          } else {
-            pathValues[pathValues.length - 1].path.push(key)
+            shouldCreateNewPathValue = false;
+            compile(value[key]);
+            currentPath.pop();
           }
-          shouldCreateNewPathValue = false
-          compile(value[key])
-          currentPath.pop()
         }
       }
+    } else if (value && (value.constructor === Array)) {
+      pushValue($ref(value));
     } else {
-      shouldCreateNewPathValue = true
-      pushConstant(value);
+      pushValue(value);
     }
-  }
-  compile(json.json)
-  return pathValues
-}
+  };
+  compile(json.json);
+  return pathValues;
+};

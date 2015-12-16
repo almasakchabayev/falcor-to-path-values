@@ -1,5 +1,6 @@
-import { expect } from 'chai'
-import toPathValues from '../src/toPathValues'
+import { expect } from 'chai';
+import { ref as $ref } from 'falcor-json-graph';
+import toPathValues from '../src/toPathValues';
 
 describe('toPathValues', () => {
   it('works with an object with no siblings', () => {
@@ -10,20 +11,20 @@ describe('toPathValues', () => {
           '\u001eparent': null,
           '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
             title: 'hello'
-          },
+          }
         }
       }
-    }
+    };
     const expected = [
       {
         path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'title'],
         value: 'hello'
       }
-    ]
-    const result = toPathValues(json)
-    expect(result[0]).to.deep.equal(expected[0])
-    expect(result.length).to.equal(expected.length)
-  })
+    ];
+    const result = toPathValues(json);
+    expect(result[0]).to.deep.equal(expected[0]);
+    expect(result.length).to.equal(expected.length);
+  });
   it('works with an object with siblings', () => {
     const json = {
       json: {
@@ -38,7 +39,7 @@ describe('toPathValues', () => {
           },
           '1f6527f3-c99d-4ff0-b31f-09cb793b9sad': {
             title: 'value3'
-          },
+          }
         },
         commentsById: {
           '\u001ekey': 'dealsById',
@@ -51,10 +52,10 @@ describe('toPathValues', () => {
           },
           '1f6527f3-c99d-4ff0-b31f-asda793b9sad': {
             text: 'comment3'
-          },
+          }
         }
       }
-    }
+    };
     const expected = [
       {
         path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'title'],
@@ -80,13 +81,13 @@ describe('toPathValues', () => {
         path: ['commentsById', '1f6527f3-c99d-4ff0-b31f-asda793b9sad', 'text'],
         value: 'comment3'
       }
-    ]
-    const result = toPathValues(json)
-    expect(result.length).to.equal(expected.length)
+    ];
+    const result = toPathValues(json);
+    expect(result.length).to.equal(expected.length);
     for (let i = 0; i < result.length; i++) {
-      expect(result[i]).to.deep.equal(expected[i])
+      expect(result[i]).to.deep.equal(expected[i]);
     }
-  })
+  });
   it('should work with object that contains circular references', () => {
     const json = {
       json: {
@@ -152,7 +153,7 @@ describe('toPathValues', () => {
           }
         }
       }
-    }
+    };
     const expected = [
       {
         path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'title'],
@@ -166,12 +167,109 @@ describe('toPathValues', () => {
         path: ['dealsById', 'cce23b62-5b13-46ee-9d93-3a0b5df741db', 'title'],
         value: 'go to awesome stack, kill relay for good'
       }
-    ]
-    const result = toPathValues(json)
-    expect(result.length).to.equal(expected.length)
+    ];
+    const result = toPathValues(json);
+    expect(result.length).to.equal(expected.length);
     for (let i = 0; i < result.length; i++) {
-      expect(result[i]).to.deep.equal(expected[i])
+      expect(result[i]).to.deep.equal(expected[i]);
     }
-  })
+  });
+  it('works with an object with one sibling inside nest', () => {
+    const json = {
+      json: {
+        dealsById: {
+          '16bca56f-7fb4-469b-8815-1edfd557d244': {
+            title: 'world'
+          },
+          '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
+            title: 'hello'
+          }
+        }
+      }
+    };
+    const expected = [
+      {
+        path: ['dealsById', '16bca56f-7fb4-469b-8815-1edfd557d244', 'title'],
+        value: 'world'
+      },
+      {
+        path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'title'],
+        value: 'hello'
+      }
+    ];
+    const result = toPathValues(json);
+    expect(result.length).to.equal(expected.length);
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i]).to.deep.equal(expected[i]);
+    }
+  });
+  it('works with refs', () => {
+    const json = {
+      json: {
+        dealsById: {
+          '\u001ekey': 'dealsById',
+          '\u001eparent': null,
+          '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
+            '\u001ekey': '1f6527f3-c99d-4ff0-b31f-09cb793b966f',
+            '\u001eparent': {},
+            comments: {
+              '0': {
+                '\u001epath': ['commentsById', 'be27b66e-31c0-4b8c-a866-f0dcb02e3781'],
+                text: 'hello Iam second comment here as well'
+              },
+              '1': {
+                '\u001epath': ['commentsById', '5f427605-01dd-4051-bfa0-a895abf0459e'],
+                text: 'hello Iam first comment'
+              },
+              '\u001ekey': 'comments',
+              '\u001eparent': {}
+            }
+          }
+        }
+      }
+    };
+    const expected = [
+      {
+        path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'comments', '0'],
+        value: $ref(['commentsById', 'be27b66e-31c0-4b8c-a866-f0dcb02e3781'])
+      },
+      {
+        path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'comments', '1'],
+        value: $ref(['commentsById', '5f427605-01dd-4051-bfa0-a895abf0459e'])
+      }
+    ];
+    const result = toPathValues(json);
+    expect(result.length).to.equal(expected.length);
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i]).to.deep.equal(expected[i]);
+    }
+  });
+  it('works with refs from serverModel', () => {
+    const json = {
+      json: {
+        dealsById: {
+          '1f6527f3-c99d-4ff0-b31f-09cb793b966f': {
+            comments: {
+              '0': [
+                'commentsById',
+                '26bca56f-7fb4-469b-8815-1edfd557d244'
+              ]
+            }
+          }
+        }
+      }
+    };
+    const expected = [
+      {
+        path: ['dealsById', '1f6527f3-c99d-4ff0-b31f-09cb793b966f', 'comments', '0'],
+        value: $ref(['commentsById', '26bca56f-7fb4-469b-8815-1edfd557d244'])
+      }
+    ];
+    const result = toPathValues(json);
+    expect(result.length).to.equal(expected.length);
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i]).to.deep.equal(expected[i]);
+    }
+  });
   // TODO json should be ignored if tackled
-})
+});
