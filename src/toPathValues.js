@@ -1,4 +1,8 @@
-import { ref as $ref } from 'falcor-json-graph';
+import falcor from 'falcor';
+import _ from 'lodash';
+
+const $ref = falcor.Model.ref;
+const $atom = falcor.Model.atom;
 
 export default json => {
   const pathValues = [];
@@ -8,44 +12,38 @@ export default json => {
     shouldCreateNewPathValue = true;
     pathValues[pathValues.length - 1].value = value;
   };
-  const getRefKey = obj => {
-    let result = false;
-    for (const key in obj) {
-      if (key.includes('path')) {
-        result = key;
-        return result;
-      }
-    }
-  };
   const compile = value => {
     if (value && (value.constructor === Object)) {
-      const refKey = getRefKey(value);
-      if (refKey) {
-        pushValue($ref(value[refKey]));
-      } else {
-        for (const key in value) {
-          if (!key.includes('key') && !key.includes('parent')) {
-            currentPath.push(key);
-            if (shouldCreateNewPathValue) {
-              pathValues[pathValues.length] = {
-                path: currentPath.slice(),
-                value: null
-              };
-            } else {
-              pathValues[pathValues.length - 1].path.push(key);
-            }
-            shouldCreateNewPathValue = false;
-            compile(value[key]);
-            currentPath.pop();
+      for (const key in value) {
+        if (!key.includes('key') && !key.includes('parent')) {
+          currentPath.push(key);
+          if (shouldCreateNewPathValue) {
+            pathValues[pathValues.length] = {
+              path: currentPath.slice(),
+              value: null
+            };
+          } else {
+            pathValues[pathValues.length - 1].path.push(key);
           }
+          shouldCreateNewPathValue = false;
+          compile(value[key]);
+          currentPath.pop();
         }
       }
     } else if (value && (value.constructor === Array)) {
-      pushValue($ref(value));
+      const uuidRegex = /[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}/;
+      if (value[1] && _.isString(value[1]) &&
+        (value[1].match(uuidRegex) || _.startsWith(value[1], 'auth0|') || _.startsWith(value[1], 'facebook|'))
+      ) {
+        pushValue($ref(value));
+      } else {
+        pushValue($atom(value));
+      }
     } else {
       pushValue(value);
     }
   };
+  // TODO what if json is undefined?
   compile(json.json);
   return pathValues;
 };
